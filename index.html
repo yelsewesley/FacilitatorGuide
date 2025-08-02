@@ -51,6 +51,7 @@
             padding: 2rem;
             border-radius: 0.5rem;
             background: white;
+            white-space: pre-wrap; /* Ensures bullets render correctly */
         }
         .definition-text {
             font-size: 0.8rem;
@@ -176,8 +177,8 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label for="high-level-goals" class="block text-sm font-medium text-slate-700 mb-1">High-Level Goals</label><textarea id="high-level-goals" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What are the overarching goals of this engagement?"></textarea></div>
-                            <div><label for="high-level-barriers" class="block text-sm font-medium text-slate-700 mb-1">High-Level Barriers</label><textarea id="high-level-barriers" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What are the known systemic or political barriers?"></textarea></div>
+                            <div><label for="high-level-goals" class="block text-sm font-medium text-slate-700 mb-1">High-Level Goals</label><textarea id="high-level-goals" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea" placeholder="What are the overarching goals of this engagement?"></textarea></div>
+                            <div><label for="high-level-barriers" class="block text-sm font-medium text-slate-700 mb-1">High-Level Barriers</label><textarea id="high-level-barriers" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea" placeholder="What are the known systemic or political barriers?"></textarea></div>
                         </div>
                     </div>
                 </div>
@@ -281,10 +282,10 @@
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 5: Post-Session Reflection</h2>
                     <p class="text-slate-500 mb-6">Capture your learnings within 24 hours to fuel your growth as a facilitator.</p>
                     <div class="space-y-6">
-                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><p class="definition-text mb-1">Which of your assumptions about group dynamics, tensions, or outcomes proved to be accurate?</p><textarea id="reflection-correct" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><p class="definition-text mb-1">What happened that you didn't expect? What new information or behaviors emerged?</p><textarea id="reflection-surprised" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><p class="definition-text mb-1">When did you feel you were most "in service" of the group's process? What specific action did you take?</p><textarea id="reflection-effective" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge for next time:</label><p class="definition-text mb-1">What is the one thing you would do differently in a similar situation? What skill do you want to develop?</p><textarea id="reflection-growth" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><p class="definition-text mb-1">Which of your assumptions about group dynamics, tensions, or outcomes proved to be accurate?</p><textarea id="reflection-correct" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea"></textarea></div>
+                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><p class="definition-text mb-1">What happened that you didn't expect? What new information or behaviors emerged?</p><textarea id="reflection-surprised" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea"></textarea></div>
+                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><p class="definition-text mb-1">When did you feel you were most "in service" of the group's process? What specific action did you take?</p><textarea id="reflection-effective" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea"></textarea></div>
+                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge for next time:</label><p class="definition-text mb-1">What is the one thing you would do differently in a similar situation? What skill do you want to develop?</p><textarea id="reflection-growth" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable bulleted-textarea"></textarea></div>
                     </div>
                 </div>
             </div>
@@ -849,6 +850,28 @@
         }
 
         function printSummary() { window.print(); }
+        
+        function handleBulletPoints(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const target = event.target;
+                const start = target.selectionStart;
+                const end = target.selectionEnd;
+                const value = target.value;
+                const textToInsert = '\n• ';
+                target.value = value.substring(0, start) + textToInsert + value.substring(end);
+                target.selectionStart = target.selectionEnd = start + textToInsert.length;
+                target.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        
+        function initializeBulletedTextareas() {
+            document.querySelectorAll('.bulleted-textarea').forEach(textarea => {
+                if (textarea.value === '') {
+                    textarea.value = '• ';
+                }
+            });
+        }
 
         window.onload = function() {
             populateStatesDropdown();
@@ -859,6 +882,7 @@
             
             loadDataFromStorage();
             renderAll();
+            initializeBulletedTextareas();
             
             document.querySelectorAll('.savable').forEach(input => {
                 input.addEventListener('input', saveData);
@@ -872,6 +896,10 @@
                     document.getElementById('summary-preset').value = 'custom';
                     generateSummary();
                 });
+            });
+
+            document.querySelectorAll('.bulleted-textarea').forEach(textarea => {
+                textarea.addEventListener('keydown', handleBulletPoints);
             });
         };
     </script>
