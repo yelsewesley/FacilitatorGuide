@@ -120,8 +120,8 @@
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
 
         <header class="text-center mb-4">
-            <h1 class="text-3xl sm:text-4xl font-bold text-slate-700">Interactive Facilitator's Guide</h1>
-            <p class="mt-2 text-lg text-slate-500">Your dynamic worksheet for planning and reflection.</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-700">Interactive Facilitator's Canvas</h1>
+            <p class="mt-2 text-lg text-slate-500">Your dynamic space for TA planning and reflection.</p>
             <div class="mt-4 h-8 flex items-center justify-center space-x-4">
                 <span id="save-indicator" class="text-emerald-600 font-semibold opacity-0">Saved.</span>
                 <div class="ml-auto flex items-center space-x-4">
@@ -149,7 +149,7 @@
             <div id="foundation" class="tab-content active">
                 <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 1: The Core Foundation</h2>
-                    <p class="text-slate-500 mb-6">Define the high-level strategic context for this engagement. This tool is intended for planning critical or high-stakes sessions, not general TA meetings.</p>
+                    <p class="text-slate-500 mb-6">Define the high-level strategic context for this engagement. This tool is intended for planning critical, high-stakes sessions and/or state reviews.</p>
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label for="facilitation-team" class="block text-sm font-medium text-slate-700 mb-1">Facilitation Team</label><input type="text" id="facilitation-team" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
@@ -187,11 +187,11 @@
             <div id="assessment" class="tab-content">
                 <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 2: Dynamics Assessment</h2>
-                    <p class="text-slate-500 mb-6">Analyze the human dynamics: stakeholder perspectives, power structures, and context.</p>
+                    <p class="text-slate-500 mb-6">Analyze the human dynamics: partner perspectives, power structures, and context.</p>
                     <div class="space-y-8">
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-2">Power & Influence</h3>
-                            <p class="text-slate-500 mb-4">Identify key participants, their source of influence, and your strategy to engage them. Adding a player here also adds them to the Stakeholder Analysis section below.</p>
+                            <p class="text-slate-500 mb-4">Identify key participants, their source of influence, and your strategy to engage them. Adding a player here also adds them to the Partner Analysis section below.</p>
                             <div class="space-y-4" id="power-players-container"></div>
                             <button onclick="addParticipant()" class="mt-2 text-md text-emerald-600 hover:text-emerald-800 font-bold">+ Add Player</button>
                             <div class="mt-4">
@@ -208,7 +208,7 @@
                             </div>
                         </div>
                         <div>
-                            <h3 class="text-xl font-semibold text-slate-800 mb-2">Stakeholder Analysis</h3>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-2">Partner Analysis</h3>
                             <p class="text-slate-500 mb-4">Rate each participant's interest and influence to map their position. The map legend helps identify who is who, especially for export.</p>
                             <div id="stakeholder-analysis-container" class="space-y-3 mb-6"></div>
                             <div class="grid md:grid-cols-2 gap-6 items-start">
@@ -307,7 +307,7 @@
                             <label class="flex items-center"><input type="checkbox" data-section="foundation" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Foundation</label>
                             <label class="flex items-center"><input type="checkbox" data-section="power" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Power & Influence</label>
                             <label class="flex items-center"><input type="checkbox" data-section="tension" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Tension Temperature</label>
-                            <label class="flex items-center"><input type="checkbox" data-section="stakeholders" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Stakeholder Analysis</label>
+                            <label class="flex items-center"><input type="checkbox" data-section="stakeholders" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Partner Analysis</label>
                             <label class="flex items-center"><input type="checkbox" data-section="plan" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Session Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="risks" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Risk & Contingency Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="facilitator-prep" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Facilitator's Inner Prep</label>
