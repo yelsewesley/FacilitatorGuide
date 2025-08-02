@@ -63,6 +63,23 @@
         #save-indicator {
             transition: opacity 0.5s ease-in-out;
         }
+        .traffic-light label {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+        .traffic-light input[type="radio"]:checked + label {
+            color: white;
+            font-weight: 600;
+        }
+        .traffic-light input[value="Low"]:checked + label { background-color: #34D399; border-color: #10B981; }
+        .traffic-light input[value="Medium"]:checked + label { background-color: #FBBF24; border-color: #F59E0B; }
+        .traffic-light input[value="High"]:checked + label { background-color: #EF4444; border-color: #DC2626; }
+        .traffic-light input[type="radio"] {
+            display: none;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -91,9 +108,14 @@
         <header class="text-center mb-4">
             <h1 class="text-3xl sm:text-4xl font-bold text-slate-700">Interactive Facilitator's Guide</h1>
             <p class="mt-2 text-lg text-slate-500">Your dynamic worksheet for planning and reflection.</p>
-            <div class="mt-4 h-6 flex items-center justify-center">
+            <div class="mt-4 h-8 flex items-center justify-center space-x-4">
                 <span id="save-indicator" class="text-emerald-600 font-semibold opacity-0">Saved.</span>
-                <button onclick="clearAllData()" class="ml-auto text-sm text-red-500 hover:text-red-700">Clear Plan & Start Over</button>
+                <div class="ml-auto flex items-center space-x-4">
+                    <button onclick="document.getElementById('import-file').click()" class="text-sm text-sky-600 hover:text-sky-800 font-semibold">Import Plan</button>
+                    <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                    <button onclick="exportData()" class="text-sm text-sky-600 hover:text-sky-800 font-semibold">Export Plan</button>
+                    <button onclick="clearAllData()" class="text-sm text-red-500 hover:text-red-700 font-semibold">Clear Plan</button>
+                </div>
             </div>
         </header>
 
@@ -112,21 +134,37 @@
             <div id="foundation" class="tab-content active">
                 <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 1: The Core Foundation</h2>
-                    <p class="text-slate-500 mb-6">Clarify the fundamental purpose, outcomes, and logistics of your session.</p>
+                    <p class="text-slate-500 mb-6">Define the high-level strategic context for this engagement.</p>
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label for="facilitation-team" class="block text-sm font-medium text-slate-700 mb-1">Facilitation Team</label><input type="text" id="facilitation-team" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
-                            <div><label for="working-state" class="block text-sm font-medium text-slate-700 mb-1">State</label><input type="text" id="working-state" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
-                            <div><label for="session-title" class="block text-sm font-medium text-slate-700 mb-1">Session Title</label><input type="text" id="session-title" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
-                            <div><label for="date-time" class="block text-sm font-medium text-slate-700 mb-1">Date & Time</label><input type="text" id="date-time" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
-                        </div>
-                         <div><label for="purpose" class="block text-sm font-medium text-slate-700 mb-1">Session Purpose</label><textarea id="purpose" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-800">Desired Outcomes</h3>
-                            <div class="mt-2 space-y-2">
-                                <div><label for="tangible-outcome" class="block text-sm font-medium text-slate-700 mb-1">Tangible Outcome</label><input type="text" id="tangible-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., a decision, a list of priorities"></div>
-                                <div><label for="experiential-outcome" class="block text-sm font-medium text-slate-700 mb-1">Experiential Outcome</label><input type="text" id="experiential-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., feel heard, have clarity"></div>
+                            <div>
+                                <label for="working-state" class="block text-sm font-medium text-slate-700 mb-1">State / Territory</label>
+                                <select id="working-state" class="form-select w-full p-2 border border-slate-300 rounded-md savable"></select>
                             </div>
+                        </div>
+                        <div><label for="date-time" class="block text-sm font-medium text-slate-700 mb-1">Date</label><input type="date" id="date-time" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">State Engagement</label>
+                                <div class="traffic-light flex space-x-2" id="state-engagement-light">
+                                    <input type="radio" id="state-low" name="state-engagement" value="Low" class="savable"><label for="state-low">Low</label>
+                                    <input type="radio" id="state-medium" name="state-engagement" value="Medium" class="savable"><label for="state-medium">Medium</label>
+                                    <input type="radio" id="state-high" name="state-engagement" value="High" class="savable"><label for="state-high">High</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">TA Effort</label>
+                                <div class="traffic-light flex space-x-2" id="ta-effort-light">
+                                    <input type="radio" id="ta-low" name="ta-effort" value="Low" class="savable"><label for="ta-low">Low</label>
+                                    <input type="radio" id="ta-medium" name="ta-effort" value="Medium" class="savable"><label for="ta-medium">Medium</label>
+                                    <input type="radio" id="ta-high" name="ta-effort" value="High" class="savable"><label for="ta-high">High</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div><label for="high-level-goals" class="block text-sm font-medium text-slate-700 mb-1">High-Level Goals</label><textarea id="high-level-goals" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What are the overarching goals of this engagement?"></textarea></div>
+                            <div><label for="high-level-barriers" class="block text-sm font-medium text-slate-700 mb-1">High-Level Barriers</label><textarea id="high-level-barriers" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What are the known systemic or political barriers?"></textarea></div>
                         </div>
                     </div>
                 </div>
@@ -174,6 +212,17 @@
                     <p class="text-slate-500 mb-6">Design the journey of your session, map the agenda, and prepare contingency plans.</p>
                     <div class="space-y-8">
                         <div>
+                            <label for="purpose" class="block text-sm font-medium text-slate-700 mb-1">Session Purpose</label>
+                            <textarea id="purpose" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What is the single most important purpose of this specific session?"></textarea>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-slate-800">Session Objectives</h3>
+                            <div class="mt-2 space-y-2">
+                                <div><label for="tangible-outcome" class="block text-sm font-medium text-slate-700 mb-1">Tangible Objective</label><input type="text" id="tangible-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., a decision, a list of priorities, a draft plan"></div>
+                                <div><label for="experiential-outcome" class="block text-sm font-medium text-slate-700 mb-1">Experiential Objective</label><input type="text" id="experiential-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., participants feel heard, have clarity, are aligned"></div>
+                            </div>
+                        </div>
+                        <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-4">Process Flow (Agenda)</h3>
                             <div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Time</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Activity</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Purpose</th></tr></thead><tbody id="agenda-body" class="bg-white divide-y divide-slate-200"></tbody></table></div>
                             <button onclick="addAgendaRow()" class="mt-2 text-sm text-emerald-600 hover:text-emerald-800 font-semibold">+ Add Agenda Item</button>
@@ -202,14 +251,15 @@
                     <div class="grid md:grid-cols-2 gap-8">
                         <div class="space-y-4">
                              <h3 class="text-xl font-semibold text-slate-800">Checklist</h3>
-                             <label class="flex items-center text-lg"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3">Mindfulness</label>
-                             <label class="flex items-center text-lg"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3">Environment Ready</label>
-                             <label class="flex items-center text-lg"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3">Materials Ready</label>
-                             <label class="flex items-center text-lg"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3">Technology Stable</label>
-                             <label class="flex items-center text-lg"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3">Stance Reviewed</label>
+                             <label class="flex items-start"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3 flex-shrink-0 mt-1"><span class="text-lg"><strong>Mindfulness:</strong><span class="block definition-text">Take a moment to center yourself and let go of your own agenda to better serve the group.</span></span></label>
+                             <label class="flex items-start"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3 flex-shrink-0 mt-1"><span class="text-lg"><strong>Environment Ready:</strong><span class="block definition-text">Is the physical or virtual space set up as planned to support your process?</span></span></label>
+                             <label class="flex items-start"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3 flex-shrink-0 mt-1"><span class="text-lg"><strong>Materials Ready:</strong><span class="block definition-text">Are all your tools (whiteboard, markers, links, etc.) ready and accessible?</span></span></label>
+                             <label class="flex items-start"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3 flex-shrink-0 mt-1"><span class="text-lg"><strong>Technology Stable:</strong><span class="block definition-text">Is your connection stable? Does screen sharing work? Test all tech.</span></span></label>
+                             <label class="flex items-start"><input type="checkbox" class="h-5 w-5 rounded text-emerald-500 mr-3 flex-shrink-0 mt-1"><span class="text-lg"><strong>Stance Reviewed:</strong><span class="block definition-text">Briefly re-read your role and mantra to set your intention for the session.</span></span></label>
                         </div>
                         <div class="bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded-r-lg">
                             <h3 class="text-xl font-semibold text-emerald-800">Facilitator's Compass</h3>
+                            <p class="mt-2 text-emerald-700">If I get lost, I will:</p>
                             <ul class="mt-2 list-decimal list-inside space-y-2 text-emerald-900"><li>Ask a Question</li><li>Use Silence</li><li>Name the Dynamic</li><li>Trust the Group</li></ul>
                         </div>
                     </div>
@@ -219,12 +269,12 @@
             <div id="reflection" class="tab-content">
                 <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 5: Post-Session Reflection</h2>
-                    <p class="text-slate-500 mb-6">Capture your learnings within 24 hours to fuel your growth.</p>
-                    <div class="space-y-4">
-                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><textarea id="reflection-correct" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><textarea id="reflection-surprised" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><textarea id="reflection-effective" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
-                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge:</label><textarea id="reflection-growth" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                    <p class="text-slate-500 mb-6">Capture your learnings within 24 hours to fuel your growth as a facilitator.</p>
+                    <div class="space-y-6">
+                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><p class="definition-text mb-1">Which of your assumptions about group dynamics, tensions, or outcomes proved to be accurate?</p><textarea id="reflection-correct" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><p class="definition-text mb-1">What happened that you didn't expect? What new information or behaviors emerged?</p><textarea id="reflection-surprised" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><p class="definition-text mb-1">When did you feel you were most "in service" of the group's process? What specific action did you take?</p><textarea id="reflection-effective" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge for next time:</label><p class="definition-text mb-1">What is the one thing you would do differently in a similar situation? What skill do you want to develop?</p><textarea id="reflection-growth" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
                     </div>
                 </div>
             </div>
@@ -258,7 +308,22 @@
         let agenda = [];
         let saveTimeout;
 
-        const STORAGE_KEY = 'facilitatorGuideData_v1';
+        const STORAGE_KEY = 'facilitatorGuideData_v4';
+
+        const statesAndTerritories = [
+            "Alabama", "Alaska", "American Samoa", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Guam", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Northern Mariana Islands", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "U.S. Virgin Islands", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+        ];
+
+        function populateStatesDropdown() {
+            const select = document.getElementById('working-state');
+            select.innerHTML = '<option value="">Select a State/Territory...</option>';
+            statesAndTerritories.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                select.appendChild(option);
+            });
+        }
 
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -279,7 +344,7 @@
             }, 1500);
         }
 
-        function saveData() {
+        function getPlanDataAsObject() {
             const simpleInputs = {};
             document.querySelectorAll('.savable').forEach(input => {
                 if (input.type === 'radio') {
@@ -299,22 +364,21 @@
                 });
             });
 
-            const data = {
+            return {
                 participants,
                 risks,
                 agenda: agendaData,
                 simpleInputs
             };
+        }
+
+        function saveData() {
+            const data = getPlanDataAsObject();
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             showSaveIndicator();
         }
 
-        function loadData() {
-            const dataString = localStorage.getItem(STORAGE_KEY);
-            if (!dataString) return;
-
-            const data = JSON.parse(dataString);
-            
+        function applyDataToState(data) {
             participants = data.participants || [];
             risks = data.risks || [];
             agenda = data.agenda || [];
@@ -324,11 +388,21 @@
                     const input = document.getElementById(key);
                     if (input) {
                         input.value = data.simpleInputs[key];
-                    } else { // Handle radio buttons
-                        const radio = document.querySelector(`input[name="${key}"][value="${data.simpleInputs[key]}"]`);
-                        if (radio) radio.checked = true;
-                    }
+                    } 
+                    const radio = document.querySelector(`input[name="${key}"][value="${data.simpleInputs[key]}"]`);
+                    if (radio) radio.checked = true;
                 });
+            }
+        }
+
+        function loadDataFromStorage() {
+            const dataString = localStorage.getItem(STORAGE_KEY);
+            if (!dataString) return;
+            try {
+                const data = JSON.parse(dataString);
+                applyDataToState(data);
+            } catch(e) {
+                console.error("Could not parse localStorage data:", e);
             }
         }
         
@@ -337,6 +411,48 @@
                 localStorage.removeItem(STORAGE_KEY);
                 location.reload();
             }
+        }
+
+        function exportData() {
+            const data = getPlanDataAsObject();
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            
+            const state = document.getElementById('working-state').value.replace(/\s+/g, '-') || 'Untitled';
+            const date = document.getElementById('date-time').value || new Date().toISOString().split('T')[0];
+            const filename = `${state}-${date}-FacilitatorPlan.json`;
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (confirm('This will overwrite your current plan saved in this browser. Are you sure you want to continue?')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        applyDataToState(data);
+                        renderAll();
+                        saveData();
+                        alert('Plan imported successfully!');
+                    } catch (error) {
+                        alert('Error: Could not parse the file. Please ensure it is a valid plan file.');
+                        console.error("Import error:", error);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            event.target.value = '';
         }
 
         function renderAll() {
@@ -355,6 +471,7 @@
             participants.forEach((player, index) => {
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200';
+                const strategyValue = player.strategy || '';
                 div.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 items-center">
                         <input type="text" value="${player.name}" oninput="updateParticipant(${index}, 'name', this.value)" placeholder="Participant Name" class="form-input p-2 border border-slate-300 rounded-md">
@@ -369,7 +486,7 @@
                     <div id="power-def-${index}" class="mt-2 pl-1 definition-text"></div>
                     <div class="mt-2">
                         <label class="text-sm font-medium text-slate-600">Engagement Strategy / Key Notes</label>
-                        <textarea oninput="updateParticipant(${index}, 'strategy', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2">${player.strategy}</textarea>
+                        <textarea oninput="updateParticipant(${index}, 'strategy', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2">${strategyValue}</textarea>
                     </div>
                 `;
                 container.appendChild(div);
@@ -386,11 +503,13 @@
             }
             participants.forEach((player, index) => {
                 const div = document.createElement('div');
+                const interestValue = player.interest || '';
+                const influenceValue = player.influence || '';
                 div.className = 'grid grid-cols-3 gap-4 items-center p-2 rounded-md even:bg-slate-50';
                 div.innerHTML = `
                     <span class="font-semibold text-slate-700">${player.name || `Participant ${index + 1}`}</span>
-                    <input type="number" value="${player.interest}" oninput="updateParticipant(${index}, 'interest', this.value)" placeholder="Interest (1-10)" min="1" max="10" class="form-input p-2 border border-slate-300 rounded-md w-full">
-                    <input type="number" value="${player.influence}" oninput="updateParticipant(${index}, 'influence', this.value)" placeholder="Influence (1-10)" min="1" max="10" class="form-input p-2 border border-slate-300 rounded-md w-full">
+                    <input type="number" value="${interestValue}" oninput="updateParticipant(${index}, 'interest', this.value)" placeholder="Interest (1-10)" min="1" max="10" class="form-input p-2 border border-slate-300 rounded-md w-full">
+                    <input type="number" value="${influenceValue}" oninput="updateParticipant(${index}, 'influence', this.value)" placeholder="Influence (1-10)" min="1" max="10" class="form-input p-2 border border-slate-300 rounded-md w-full">
                 `;
                 container.appendChild(div);
             });
@@ -414,15 +533,17 @@
             container.innerHTML = '';
             risks.forEach((risk, index) => {
                 const div = document.createElement('div');
+                const descriptionValue = risk.description || '';
+                const interventionValue = risk.intervention || '';
                 div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200';
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
                         <label class="text-sm font-medium text-slate-600">Risk #${index + 1}</label>
                         <button onclick="removeRisk(${index})" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
                     </div>
-                    <textarea oninput="updateRisk(${index}, 'description', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="Describe the potential risk...">${risk.description}</textarea>
+                    <textarea oninput="updateRisk(${index}, 'description', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="Describe the potential risk...">${descriptionValue}</textarea>
                     <label class="text-sm font-medium text-slate-600 mt-2 block">Contingency Plan / Intervention</label>
-                    <textarea oninput="updateRisk(${index}, 'intervention', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="How will you respond if this happens?">${risk.intervention}</textarea>
+                    <textarea oninput="updateRisk(${index}, 'intervention', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="How will you respond if this happens?">${interventionValue}</textarea>
                 `;
                 container.appendChild(div);
             });
@@ -433,7 +554,10 @@
             tbody.innerHTML = '';
             agenda.forEach((item, index) => {
                 const newRow = document.createElement('tr');
-                newRow.innerHTML = `<td class="px-4 py-2"><input type="text" value="${item.time}" oninput="updateAgenda(${index}, 'time', this.value)" class="form-input w-24 p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${item.activity}" oninput="updateAgenda(${index}, 'activity', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${item.purpose}" oninput="updateAgenda(${index}, 'purpose', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td>`;
+                const timeValue = item.time || '';
+                const activityValue = item.activity || '';
+                const purposeValue = item.purpose || '';
+                newRow.innerHTML = `<td class="px-4 py-2"><input type="time" value="${timeValue}" oninput="updateAgenda(${index}, 'time', this.value)" class="form-input w-32 p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${activityValue}" oninput="updateAgenda(${index}, 'activity', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${purposeValue}" oninput="updateAgenda(${index}, 'purpose', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td>`;
                 tbody.appendChild(newRow);
             });
         }
@@ -530,6 +654,10 @@
             const preview = document.getElementById('summary-preview');
             let html = '<div class="space-y-8">';
             const getVal = (id) => document.getElementById(id).value;
+            const getRadioVal = (name) => {
+                const checked = document.querySelector(`input[name="${name}"]:checked`);
+                return checked ? checked.value : 'Not set';
+            };
             const escapeHtml = (unsafe) => unsafe ? unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : '';
 
             controls.forEach(control => {
@@ -538,15 +666,16 @@
                     html += '<section>';
                     switch (section) {
                         case 'foundation':
-                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Session Foundation</h2>';
+                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Foundation</h2>';
                             html += `<p><strong>Team:</strong> ${escapeHtml(getVal('facilitation-team'))}</p>`;
                             html += `<p><strong>State:</strong> ${escapeHtml(getVal('working-state'))}</p>`;
-                            html += `<p><strong>Title:</strong> ${escapeHtml(getVal('session-title'))}</p>`;
                             html += `<p><strong>Date:</strong> ${escapeHtml(getVal('date-time'))}</p>`;
-                            html += `<p><strong>Purpose:</strong> ${escapeHtml(getVal('purpose'))}</p>`;
-                            html += `<h3 class="text-lg font-semibold mt-4">Desired Outcomes</h3>`;
-                            html += `<p><strong>Tangible:</strong> ${escapeHtml(getVal('tangible-outcome'))}</p>`;
-                            html += `<p><strong>Experiential:</strong> ${escapeHtml(getVal('experiential-outcome'))}</p>`;
+                            html += `<div class="grid grid-cols-2 gap-4 mt-4">`;
+                            html += `<div><p><strong>State Engagement:</strong> ${escapeHtml(getRadioVal('state-engagement'))}</p></div>`;
+                            html += `<div><p><strong>TA Effort:</strong> ${escapeHtml(getRadioVal('ta-effort'))}</p></div>`;
+                            html += `</div>`;
+                            html += `<h3 class="text-lg font-semibold mt-4">High-Level Goals</h3><p>${escapeHtml(getVal('high-level-goals'))}</p>`;
+                            html += `<h3 class="text-lg font-semibold mt-4">High-Level Barriers</h3><p>${escapeHtml(getVal('high-level-barriers'))}</p>`;
                             break;
                         case 'power':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Power & Influence</h2>';
@@ -557,8 +686,7 @@
                             if (powerChart) html += `<img src="${powerChart.toBase64Image()}" class="mt-4 mx-auto" style="max-width: 400px;"/>`;
                             break;
                         case 'tension':
-                            const tension = document.querySelector('#tension-check input:checked');
-                            html += `<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2><p>${tension ? tension.value : 'Not set'}</p>`;
+                            html += `<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2><p>${escapeHtml(getRadioVal('tension'))}</p>`;
                             break;
                         case 'stakeholders':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Stakeholder Analysis</h2>';
@@ -568,6 +696,10 @@
                             break;
                         case 'plan':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Process & Plan</h2>';
+                            html += `<h3 class="text-lg font-semibold mt-4">Session Purpose</h3><p>${escapeHtml(getVal('purpose'))}</p>`;
+                            html += `<h3 class="text-lg font-semibold mt-4">Session Objectives</h3>`;
+                            html += `<p><strong>Tangible:</strong> ${escapeHtml(getVal('tangible-outcome'))}</p>`;
+                            html += `<p><strong>Experiential:</strong> ${escapeHtml(getVal('experiential-outcome'))}</p>`;
                             html += '<h3 class="text-lg font-semibold mt-4 mb-2">Agenda</h3>';
                             html += '<table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2 text-left">Time</th><th class="p-2 text-left">Activity</th><th class="p-2 text-left">Purpose</th></tr></thead><tbody>';
                             agenda.forEach(item => {
@@ -601,16 +733,20 @@
         function printSummary() { window.print(); }
 
         window.onload = function() {
+            populateStatesDropdown();
             const powerCtx = document.getElementById('powerChart').getContext('2d');
             powerChart = new Chart(powerCtx, { type: 'doughnut', data: { labels: ['Position', 'Expert', 'Relationship'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#6366F1', '#34D399', '#FBBF24'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'top' }}}});
             const stakeholderCtx = document.getElementById('stakeholderChart').getContext('2d');
             stakeholderChart = new Chart(stakeholderCtx, { type: 'bubble', data: { datasets: [{ label: 'Stakeholders', data: [], backgroundColor: 'rgba(52, 211, 153, 0.5)', borderColor: 'rgb(20, 83, 45)', borderWidth: 1, }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { title: { display: true, text: 'Influence (1-10)' }, min: -0.5, max: 10.5, }, y: { title: { display: true, text: 'Interest (1-10)' }, min: -0.5, max: 10.5 }}, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.raw.label || '' }}, title: { display: true, text: 'Stakeholder Influence vs. Interest' }}}});
             
-            loadData();
+            loadDataFromStorage();
             renderAll();
             
             document.querySelectorAll('.savable').forEach(input => {
                 input.addEventListener('input', saveData);
+                if(input.type === 'radio' || input.tagName.toLowerCase() === 'select') {
+                    input.addEventListener('change', saveData);
+                }
             });
             document.querySelectorAll('#summary-controls input').forEach(c => c.addEventListener('change', generateSummary));
         };
