@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Chosen Palette: "Soothing Sage" - A calm, professional palette with off-white, sage green, and slate gray. -->
-    <!-- Application Structure Plan: A multi-tab single-page application following a facilitator's workflow: Foundation, Dynamics, Plan, Pre-Check, Reflection, and Summary/Export. This task-oriented approach breaks the worksheet into manageable steps. Key interactions include tabbed navigation, a dynamic summary page with checkboxes for export, and integrated participant lists to reduce redundant data entry. This structure was chosen to transform a passive document into an active, guided planning tool with a tangible output. -->
-    <!-- Visualization & Content Choices: 1. Power/Stakeholder Analysis: Goal is to organize relationships. Method is an interactive bubble chart (Chart.js/Canvas) and doughnut chart. Interaction: User adds a person to the Power list, which auto-populates the Stakeholder list. User then adds Interest/Influence scores to update the bubble chart. Power types update the doughnut chart. Justification: This integrated approach provides immediate visual analysis and a streamlined user experience. 2. Summary Page: Goal is to consolidate and export. Method: JS reads data from all tabs, converts charts to images, and builds an HTML preview. Interaction: Checkboxes control content, print button exports. Justification: Creates a customizable, portable final document. -->
+    <!-- Application Structure Plan: A multi-tab single-page application following a facilitator's workflow. Added localStorage for data persistence, a "Clear Data" function, deeper stakeholder notes, and a structured risk planning module. This enhances the tool from a single-use worksheet to a reusable, strategic planning partner. -->
+    <!-- Visualization & Content Choices: 1. Stakeholder Analysis: Bubble chart (Chart.js) with a numbered legend for export clarity. 2. Power Dynamics: Doughnut chart (Chart.js). 3. Data Persistence: All user-entered data (text fields, participants, risks) is saved to localStorage on every change and loaded on page start. 4. Risk Planning: A dynamic list allows users to add/remove potential session risks and their corresponding intervention plans. Justification: These choices create a robust, persistent, and strategically deeper tool. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -56,6 +56,13 @@
             font-size: 0.8rem;
             color: #64748b; /* slate-500 */
         }
+        #stakeholder-legend {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #save-indicator {
+            transition: opacity 0.5s ease-in-out;
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -81,20 +88,24 @@
 
     <div class="container mx-auto p-4 sm:p-6 lg:p-8">
 
-        <header class="text-center mb-8">
+        <header class="text-center mb-4">
             <h1 class="text-3xl sm:text-4xl font-bold text-slate-700">Interactive Facilitator's Guide</h1>
             <p class="mt-2 text-lg text-slate-500">Your dynamic worksheet for planning and reflection.</p>
+            <div class="mt-4 h-6 flex items-center justify-center">
+                <span id="save-indicator" class="text-emerald-600 font-semibold opacity-0">Saved.</span>
+                <button onclick="clearAllData()" class="ml-auto text-sm text-red-500 hover:text-red-700">Clear Plan & Start Over</button>
+            </div>
         </header>
 
         <div class="w-full max-w-6xl mx-auto">
             <!-- Tabs Navigation -->
             <div id="main-nav" class="flex flex-wrap justify-center border-b border-slate-200 mb-8">
-                <button class="tab-button active text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('foundation')">1. Foundation</button>
-                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('assessment')">2. Dynamics</button>
-                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('plan')">3. Plan</button>
-                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('checklist')">4. Pre-Check</button>
-                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('reflection')">5. Reflection</button>
-                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700" onclick="showTab('summary')">6. Summary & Export</button>
+                <button class="tab-button active text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('foundation')">1. Foundation</button>
+                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('assessment')">2. Dynamics</button>
+                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('plan')">3. Plan</button>
+                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('checklist')">4. Pre-Check</button>
+                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('reflection')">5. Reflection</button>
+                <button class="tab-button text-sm sm:text-base py-3 px-4 sm:px-6 border-b-2 border-transparent" onclick="showTab('summary')">6. Summary & Export</button>
             </div>
 
             <!-- Tab Content -->
@@ -104,30 +115,17 @@
                     <p class="text-slate-500 mb-6">Clarify the fundamental purpose, outcomes, and logistics of your session.</p>
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="session-title" class="block text-sm font-medium text-slate-700 mb-1">Session Title</label>
-                                <input type="text" id="session-title" class="form-input w-full p-2 border border-slate-300 rounded-md">
-                            </div>
-                            <div>
-                                <label for="date-time" class="block text-sm font-medium text-slate-700 mb-1">Date & Time</label>
-                                <input type="text" id="date-time" class="form-input w-full p-2 border border-slate-300 rounded-md">
-                            </div>
+                            <div><label for="facilitation-team" class="block text-sm font-medium text-slate-700 mb-1">Facilitation Team</label><input type="text" id="facilitation-team" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
+                            <div><label for="working-state" class="block text-sm font-medium text-slate-700 mb-1">State</label><input type="text" id="working-state" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
+                            <div><label for="session-title" class="block text-sm font-medium text-slate-700 mb-1">Session Title</label><input type="text" id="session-title" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
+                            <div><label for="date-time" class="block text-sm font-medium text-slate-700 mb-1">Date & Time</label><input type="text" id="date-time" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
                         </div>
-                         <div>
-                            <label for="purpose" class="block text-sm font-medium text-slate-700 mb-1">Session Purpose</label>
-                            <textarea id="purpose" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md"></textarea>
-                        </div>
+                         <div><label for="purpose" class="block text-sm font-medium text-slate-700 mb-1">Session Purpose</label><textarea id="purpose" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
                         <div>
                             <h3 class="text-lg font-semibold text-slate-800">Desired Outcomes</h3>
                             <div class="mt-2 space-y-2">
-                                <div>
-                                    <label for="tangible-outcome" class="block text-sm font-medium text-slate-700 mb-1">Tangible Outcome</label>
-                                    <input type="text" id="tangible-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., a decision, a list of priorities">
-                                </div>
-                                <div>
-                                    <label for="experiential-outcome" class="block text-sm font-medium text-slate-700 mb-1">Experiential Outcome</label>
-                                    <input type="text" id="experiential-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., feel heard, have clarity">
-                                </div>
+                                <div><label for="tangible-outcome" class="block text-sm font-medium text-slate-700 mb-1">Tangible Outcome</label><input type="text" id="tangible-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., a decision, a list of priorities"></div>
+                                <div><label for="experiential-outcome" class="block text-sm font-medium text-slate-700 mb-1">Experiential Outcome</label><input type="text" id="experiential-outcome" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., feel heard, have clarity"></div>
                             </div>
                         </div>
                     </div>
@@ -141,9 +139,9 @@
                     <div class="space-y-8">
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-2">Power & Influence</h3>
-                            <p class="text-slate-500 mb-4">Identify key participants and their primary source of influence in the group. Adding a player here will also add them to the Stakeholder Analysis section below.</p>
+                            <p class="text-slate-500 mb-4">Identify key participants, their source of influence, and your strategy to engage them. Adding a player here also adds them to the Stakeholder Analysis section below.</p>
                             <div class="space-y-4" id="power-players-container"></div>
-                            <button onclick="addPowerPlayer()" class="mt-2 text-sm text-emerald-600 hover:text-emerald-800 font-semibold">+ Add Player</button>
+                            <button onclick="addParticipant()" class="mt-2 text-md text-emerald-600 hover:text-emerald-800 font-bold">+ Add Player</button>
                             <div class="mt-4">
                                <h4 class="text-md font-semibold text-slate-700 mb-2">Power Distribution</h4>
                                <div class="chart-container" style="height:250px; max-height:30vh;"><canvas id="powerChart"></canvas></div>
@@ -152,18 +150,19 @@
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-2">Tension Temperature</h3>
                             <div class="space-y-2" id="tension-check">
-                                <label class="flex items-start"><input type="radio" name="tension" value="Cool" class="form-radio h-4 w-4 text-emerald-600 mt-1"><span class="ml-2"><strong>Cool:</strong><span class="definition-text ml-1">Trust is high, rapport is easy. Low risk of conflict.</span></span></label>
-                                <label class="flex items-start"><input type="radio" name="tension" value="Warm" class="form-radio h-4 w-4 text-emerald-600 mt-1"><span class="ml-2"><strong>Warm:</strong><span class="definition-text ml-1">Some differing opinions, professional respect exists. Productive debate is possible.</span></span></label>
-                                <label class="flex items-start"><input type="radio" name="tension" value="Hot" class="form-radio h-4 w-4 text-emerald-600 mt-1"><span class="ml-2"><strong>Hot:</strong><span class="definition-text ml-1">Known conflicts, low trust, high emotional stakes. Requires careful management.</span></span></label>
+                                <label class="flex items-start"><input type="radio" name="tension" value="Cool" class="form-radio h-4 w-4 text-emerald-600 mt-1 savable"><span class="ml-2"><strong>Cool:</strong><span class="definition-text ml-1">Trust is high, rapport is easy. Low risk of conflict.</span></span></label>
+                                <label class="flex items-start"><input type="radio" name="tension" value="Warm" class="form-radio h-4 w-4 text-emerald-600 mt-1 savable"><span class="ml-2"><strong>Warm:</strong><span class="definition-text ml-1">Some differing opinions, professional respect exists. Productive debate is possible.</span></span></label>
+                                <label class="flex items-start"><input type="radio" name="tension" value="Hot" class="form-radio h-4 w-4 text-emerald-600 mt-1 savable"><span class="ml-2"><strong>Hot:</strong><span class="definition-text ml-1">Known conflicts, low trust, high emotional stakes. Requires careful management.</span></span></label>
                             </div>
                         </div>
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-2">Stakeholder Analysis</h3>
-                            <p class="text-slate-500 mb-4">For each participant, rate their level of interest in the session's topic and their level of influence within the group to map their position.</p>
-                            <div id="stakeholder-analysis-container" class="space-y-3">
-                                <!-- Stakeholder analysis rows will be generated here -->
+                            <p class="text-slate-500 mb-4">Rate each participant's interest and influence to map their position. The map legend helps identify who is who, especially for export.</p>
+                            <div id="stakeholder-analysis-container" class="space-y-3 mb-6"></div>
+                            <div class="grid md:grid-cols-2 gap-6 items-start">
+                                <div class="chart-container"><canvas id="stakeholderChart"></canvas></div>
+                                <div class="bg-slate-50 p-4 rounded-lg"><h4 class="font-semibold text-slate-700 mb-2">Map Legend</h4><div id="stakeholder-legend"></div></div>
                             </div>
-                            <div class="mt-4"><div class="chart-container"><canvas id="stakeholderChart"></canvas></div></div>
                         </div>
                     </div>
                 </div>
@@ -176,19 +175,20 @@
                     <div class="space-y-8">
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-4">Process Flow (Agenda)</h3>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full">
-                                    <thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Time</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Activity</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Purpose</th></tr></thead>
-                                    <tbody id="agenda-body" class="bg-white divide-y divide-slate-200"></tbody>
-                                </table>
-                            </div>
+                            <div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-slate-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Time</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Activity</th><th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Purpose</th></tr></thead><tbody id="agenda-body" class="bg-white divide-y divide-slate-200"></tbody></table></div>
                             <button onclick="addAgendaRow()" class="mt-2 text-sm text-emerald-600 hover:text-emerald-800 font-semibold">+ Add Agenda Item</button>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-800 mb-4">Risk & Contingency Planning</h3>
+                            <p class="text-slate-500 mb-4">Proactively identify potential risks to the session and plan your response if they arise.</p>
+                            <div class="space-y-4" id="risk-container"></div>
+                            <button onclick="addRisk()" class="mt-2 text-md text-emerald-600 hover:text-emerald-800 font-bold">+ Add Risk</button>
                         </div>
                         <div>
                             <h3 class="text-xl font-semibold text-slate-800 mb-4">Facilitator's Inner Prep</h3>
                              <div class="space-y-4">
-                                <div><label for="facilitator-role" class="block text-sm font-medium text-slate-700 mb-1">My primary role</label><input type="text" id="facilitator-role" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., neutral guide, gentle challenger"></div>
-                                <div><label for="facilitator-mantra" class="block text-sm font-medium text-slate-700 mb-1">My mantra</label><input type="text" id="facilitator-mantra" class="form-input w-full p-2 border border-slate-300 rounded-md" placeholder="e.g., Trust the group, Stay curious"></div>
+                                <div><label for="facilitator-role" class="block text-sm font-medium text-slate-700 mb-1">My primary role</label><input type="text" id="facilitator-role" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., neutral guide, gentle challenger"></div>
+                                <div><label for="facilitator-mantra" class="block text-sm font-medium text-slate-700 mb-1">My mantra</label><input type="text" id="facilitator-mantra" class="form-input w-full p-2 border border-slate-300 rounded-md savable" placeholder="e.g., Trust the group, Stay curious"></div>
                             </div>
                         </div>
                     </div>
@@ -221,10 +221,10 @@
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 5: Post-Session Reflection</h2>
                     <p class="text-slate-500 mb-6">Capture your learnings within 24 hours to fuel your growth.</p>
                     <div class="space-y-4">
-                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><textarea id="reflection-correct" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md"></textarea></div>
-                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><textarea id="reflection-surprised" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md"></textarea></div>
-                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><textarea id="reflection-effective" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md"></textarea></div>
-                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge:</label><textarea id="reflection-growth" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md"></textarea></div>
+                        <div><label for="reflection-correct" class="block text-sm font-medium text-slate-700 mb-1">What I predicted correctly:</label><textarea id="reflection-correct" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                        <div><label for="reflection-surprised" class="block text-sm font-medium text-slate-700 mb-1">What surprised me:</label><textarea id="reflection-surprised" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                        <div><label for="reflection-effective" class="block text-sm font-medium text-slate-700 mb-1">My most effective moment:</label><textarea id="reflection-effective" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
+                         <div><label for="reflection-growth" class="block text-sm font-medium text-slate-700 mb-1">My growth edge:</label><textarea id="reflection-growth" rows="3" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable"></textarea></div>
                     </div>
                 </div>
             </div>
@@ -240,15 +240,12 @@
                             <label class="flex items-center"><input type="checkbox" data-section="tension" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Tension Temperature</label>
                             <label class="flex items-center"><input type="checkbox" data-section="stakeholders" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Stakeholder Analysis</label>
                             <label class="flex items-center"><input type="checkbox" data-section="plan" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Process & Plan</label>
+                            <label class="flex items-center"><input type="checkbox" data-section="risks" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Risk & Contingency Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="reflection" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Reflection</label>
                         </div>
                         <button onclick="printSummary()" class="mt-6 w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-600 transition-colors">Print / Export to PDF</button>
                     </div>
-                    <div class="lg:col-span-2">
-                        <div id="summary-preview">
-                            <!-- Summary content will be generated here -->
-                        </div>
-                    </div>
+                    <div class="lg:col-span-2"><div id="summary-preview"></div></div>
                 </div>
             </div>
         </div>
@@ -257,6 +254,11 @@
     <script>
         let stakeholderChart, powerChart;
         let participants = [];
+        let risks = [];
+        let agenda = [];
+        let saveTimeout;
+
+        const STORAGE_KEY = 'facilitatorGuideData_v1';
 
         function showTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -268,19 +270,91 @@
             if (tabId === 'summary') generateSummary();
         }
 
+        function showSaveIndicator() {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.remove('opacity-0');
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                indicator.classList.add('opacity-0');
+            }, 1500);
+        }
+
+        function saveData() {
+            const simpleInputs = {};
+            document.querySelectorAll('.savable').forEach(input => {
+                if (input.type === 'radio') {
+                    if (input.checked) simpleInputs[input.name] = input.value;
+                } else {
+                    simpleInputs[input.id] = input.value;
+                }
+            });
+
+            const agendaData = [];
+            document.querySelectorAll('#agenda-body tr').forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                agendaData.push({
+                    time: inputs[0].value,
+                    activity: inputs[1].value,
+                    purpose: inputs[2].value
+                });
+            });
+
+            const data = {
+                participants,
+                risks,
+                agenda: agendaData,
+                simpleInputs
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            showSaveIndicator();
+        }
+
+        function loadData() {
+            const dataString = localStorage.getItem(STORAGE_KEY);
+            if (!dataString) return;
+
+            const data = JSON.parse(dataString);
+            
+            participants = data.participants || [];
+            risks = data.risks || [];
+            agenda = data.agenda || [];
+
+            if (data.simpleInputs) {
+                Object.keys(data.simpleInputs).forEach(key => {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = data.simpleInputs[key];
+                    } else { // Handle radio buttons
+                        const radio = document.querySelector(`input[name="${key}"][value="${data.simpleInputs[key]}"]`);
+                        if (radio) radio.checked = true;
+                    }
+                });
+            }
+        }
+        
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data for this plan? This action cannot be undone.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
         function renderAll() {
             renderPowerPlayers();
             renderStakeholderAnalysis();
+            renderStakeholderLegend();
+            renderRisks();
+            renderAgenda();
             updatePowerChart();
             updateStakeholderChart();
         }
-
+        
         function renderPowerPlayers() {
             const container = document.getElementById('power-players-container');
             container.innerHTML = '';
             participants.forEach((player, index) => {
                 const div = document.createElement('div');
-                div.className = 'p-3 bg-slate-50 rounded-lg';
+                div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200';
                 div.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 items-center">
                         <input type="text" value="${player.name}" oninput="updateParticipant(${index}, 'name', this.value)" placeholder="Participant Name" class="form-input p-2 border border-slate-300 rounded-md">
@@ -293,6 +367,10 @@
                         <button onclick="removeParticipant(${index})" class="text-red-500 hover:text-red-700 text-sm justify-self-start md:justify-self-end">Remove</button>
                     </div>
                     <div id="power-def-${index}" class="mt-2 pl-1 definition-text"></div>
+                    <div class="mt-2">
+                        <label class="text-sm font-medium text-slate-600">Engagement Strategy / Key Notes</label>
+                        <textarea oninput="updateParticipant(${index}, 'strategy', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2">${player.strategy}</textarea>
+                    </div>
                 `;
                 container.appendChild(div);
                 updatePowerDefinition(index);
@@ -317,6 +395,48 @@
                 container.appendChild(div);
             });
         }
+
+        function renderStakeholderLegend() {
+            const container = document.getElementById('stakeholder-legend');
+            if (participants.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-sm">Participants will be listed here as you add them.</p>`; return;
+            }
+            let html = '<ul class="space-y-2 text-sm">';
+            participants.forEach((p, index) => {
+                html += `<li><strong>${index + 1}. ${p.name || 'Unnamed'}:</strong> (Inf: ${p.influence || '?'}, Int: ${p.interest || '?'})</li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        }
+
+        function renderRisks() {
+            const container = document.getElementById('risk-container');
+            container.innerHTML = '';
+            risks.forEach((risk, index) => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <label class="text-sm font-medium text-slate-600">Risk #${index + 1}</label>
+                        <button onclick="removeRisk(${index})" class="text-red-500 hover:text-red-700 text-sm">Remove</button>
+                    </div>
+                    <textarea oninput="updateRisk(${index}, 'description', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="Describe the potential risk...">${risk.description}</textarea>
+                    <label class="text-sm font-medium text-slate-600 mt-2 block">Contingency Plan / Intervention</label>
+                    <textarea oninput="updateRisk(${index}, 'intervention', this.value)" class="form-textarea w-full mt-1 p-2 border border-slate-300 rounded-md text-sm" rows="2" placeholder="How will you respond if this happens?">${risk.intervention}</textarea>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderAgenda() {
+            const tbody = document.getElementById('agenda-body');
+            tbody.innerHTML = '';
+            agenda.forEach((item, index) => {
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `<td class="px-4 py-2"><input type="text" value="${item.time}" oninput="updateAgenda(${index}, 'time', this.value)" class="form-input w-24 p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${item.activity}" oninput="updateAgenda(${index}, 'activity', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td><td class="px-4 py-2"><input type="text" value="${item.purpose}" oninput="updateAgenda(${index}, 'purpose', this.value)" class="form-input w-full p-1 border border-slate-300 rounded-md"></td>`;
+                tbody.appendChild(newRow);
+            });
+        }
         
         function updatePowerDefinition(index) {
             const player = participants[index];
@@ -327,36 +447,65 @@
                 case 'Expert': defText = 'Influence from knowledge, skills, or experience (e.g., Lead Engineer, Subject Matter Expert).'; break;
                 case 'Relationship': defText = 'Influence from connections, trust, and social networks (e.g., respected long-timer, well-connected colleague).'; break;
             }
-            defEl.textContent = defText;
+            if (defEl) defEl.textContent = defText;
         }
 
         function addParticipant() {
             if (participants.length < 20) {
-                participants.push({ name: '', powerType: '', interest: '', influence: '' });
+                participants.push({ name: '', powerType: '', interest: '', influence: '', strategy: '' });
                 renderAll();
+                saveData();
             }
         }
-        
-        const addPowerPlayer = addParticipant;
-
 
         function removeParticipant(index) {
             participants.splice(index, 1);
             renderAll();
+            saveData();
         }
 
         function updateParticipant(index, key, value) {
             participants[index][key] = value;
             if (key === 'name') {
                 renderStakeholderAnalysis();
-            }
-            if (key === 'powerType') {
-                updatePowerChart();
+                renderStakeholderLegend();
+                updateStakeholderChart();
+            } else if (key === 'powerType') {
                 updatePowerDefinition(index);
-            }
-            if (key === 'interest' || key === 'influence') {
+                updatePowerChart();
+            } else if (key === 'interest' || key === 'influence') {
+                renderStakeholderLegend();
                 updateStakeholderChart();
             }
+            saveData();
+        }
+
+        function addRisk() {
+            risks.push({ description: '', intervention: '' });
+            renderRisks();
+            saveData();
+        }
+
+        function removeRisk(index) {
+            risks.splice(index, 1);
+            renderRisks();
+            saveData();
+        }
+
+        function updateRisk(index, key, value) {
+            risks[index][key] = value;
+            saveData();
+        }
+
+        function addAgendaRow() {
+            agenda.push({ time: '', activity: '', purpose: '' });
+            renderAgenda();
+            saveData();
+        }
+
+        function updateAgenda(index, key, value) {
+            agenda[index][key] = value;
+            saveData();
         }
 
         function updatePowerChart() {
@@ -364,28 +513,18 @@
             participants.forEach(p => { if (p.powerType) counts[p.powerType]++; });
             if(powerChart) {
                 powerChart.data.datasets[0].data = Object.values(counts);
-                powerChart.update();
+                powerChart.update('none');
             }
         }
 
         function updateStakeholderChart() {
             if (!stakeholderChart) return;
-            stakeholderChart.data.datasets[0].data = participants.map(p => ({
-                x: p.influence,
-                y: p.interest,
-                r: 8,
-                label: p.name
+            stakeholderChart.data.datasets[0].data = participants.map((p, index) => ({
+                x: p.influence, y: p.interest, r: 10, label: `${index + 1}. ${p.name}`
             }));
-            stakeholderChart.update();
+            stakeholderChart.update('none');
         }
         
-        function addAgendaRow() {
-            const tbody = document.getElementById('agenda-body');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `<td class="px-4 py-2"><input type="text" class="form-input w-24 p-1 border border-slate-300 rounded-md" placeholder="9:00"></td><td class="px-4 py-2"><input type="text" class="form-input w-full p-1 border border-slate-300 rounded-md" placeholder="Activity Name"></td><td class="px-4 py-2"><input type="text" class="form-input w-full p-1 border border-slate-300 rounded-md" placeholder="Purpose of this step"></td>`;
-            tbody.appendChild(newRow);
-        }
-
         function generateSummary() {
             const controls = document.querySelectorAll('#summary-controls input[type="checkbox"]');
             const preview = document.getElementById('summary-preview');
@@ -400,6 +539,8 @@
                     switch (section) {
                         case 'foundation':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Session Foundation</h2>';
+                            html += `<p><strong>Team:</strong> ${escapeHtml(getVal('facilitation-team'))}</p>`;
+                            html += `<p><strong>State:</strong> ${escapeHtml(getVal('working-state'))}</p>`;
                             html += `<p><strong>Title:</strong> ${escapeHtml(getVal('session-title'))}</p>`;
                             html += `<p><strong>Date:</strong> ${escapeHtml(getVal('date-time'))}</p>`;
                             html += `<p><strong>Purpose:</strong> ${escapeHtml(getVal('purpose'))}</p>`;
@@ -409,34 +550,38 @@
                             break;
                         case 'power':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Power & Influence</h2>';
-                            html += '<ul>';
                             participants.filter(p => p.name).forEach(p => {
-                                html += `<li><strong>${escapeHtml(p.name)}:</strong> ${escapeHtml(p.powerType)}</li>`;
+                                html += `<div class="mb-2"><p><strong>${escapeHtml(p.name)}:</strong> ${escapeHtml(p.powerType)}</p>`;
+                                if(p.strategy) html += `<p class="text-sm pl-4"><em>Strategy:</em> ${escapeHtml(p.strategy)}</p></div>`;
                             });
-                            html += '</ul>';
                             if (powerChart) html += `<img src="${powerChart.toBase64Image()}" class="mt-4 mx-auto" style="max-width: 400px;"/>`;
                             break;
                         case 'tension':
                             const tension = document.querySelector('#tension-check input:checked');
-                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2>';
-                            html += `<p>${tension ? tension.value : 'Not set'}</p>`;
+                            html += `<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2><p>${tension ? tension.value : 'Not set'}</p>`;
                             break;
                         case 'stakeholders':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Stakeholder Analysis</h2>';
-                            if (stakeholderChart) html += `<img src="${stakeholderChart.toBase64Image()}" class="mt-4 mx-auto" style="max-width: 500px;"/>`;
+                            html += '<div style="display:flex; gap: 1rem; align-items: flex-start;">';
+                            if (stakeholderChart) html += `<img src="${stakeholderChart.toBase64Image()}" style="max-width: 400px; flex-shrink:0;"/>`;
+                            html += '<div><h4>Legend</h4>' + document.getElementById('stakeholder-legend').innerHTML + '</div></div>';
                             break;
                         case 'plan':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Process & Plan</h2>';
                             html += '<h3 class="text-lg font-semibold mt-4 mb-2">Agenda</h3>';
                             html += '<table class="w-full text-sm"><thead><tr class="bg-slate-100"><th class="p-2 text-left">Time</th><th class="p-2 text-left">Activity</th><th class="p-2 text-left">Purpose</th></tr></thead><tbody>';
-                            document.querySelectorAll('#agenda-body tr').forEach(row => {
-                                const inputs = row.querySelectorAll('input');
-                                html += `<tr><td class="p-2 border-t">${escapeHtml(inputs[0].value)}</td><td class="p-2 border-t">${escapeHtml(inputs[1].value)}</td><td class="p-2 border-t">${escapeHtml(inputs[2].value)}</td></tr>`;
+                            agenda.forEach(item => {
+                                html += `<tr><td class="p-2 border-t">${escapeHtml(item.time)}</td><td class="p-2 border-t">${escapeHtml(item.activity)}</td><td class="p-2 border-t">${escapeHtml(item.purpose)}</td></tr>`;
                             });
                             html += '</tbody></table>';
                             html += `<h3 class="text-lg font-semibold mt-4">Facilitator Stance</h3>`;
-                            html += `<p><strong>Role:</strong> ${escapeHtml(getVal('facilitator-role'))}</p>`;
-                            html += `<p><strong>Mantra:</strong> ${escapeHtml(getVal('facilitator-mantra'))}</p>`;
+                            html += `<p><strong>Role:</strong> ${escapeHtml(getVal('facilitator-role'))}</p><p><strong>Mantra:</strong> ${escapeHtml(getVal('facilitator-mantra'))}</p>`;
+                            break;
+                        case 'risks':
+                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Risk & Contingency Plan</h2>';
+                            risks.filter(r => r.description).forEach(r => {
+                                html += `<div class="mb-2"><p><strong>Risk:</strong> ${escapeHtml(r.description)}</p><p class="text-sm pl-4"><em>Plan:</em> ${escapeHtml(r.intervention)}</p></div>`;
+                            });
                             break;
                         case 'reflection':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Post-Session Reflection</h2>';
@@ -449,23 +594,24 @@
                     html += '</section>';
                 }
             });
-
             html += '</div>';
             preview.innerHTML = html;
         }
 
-        function printSummary() {
-            window.print();
-        }
+        function printSummary() { window.print(); }
 
         window.onload = function() {
             const powerCtx = document.getElementById('powerChart').getContext('2d');
-            powerChart = new Chart(powerCtx, { type: 'doughnut', data: { labels: ['Position', 'Expert', 'Relationship'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#6366F1', '#34D399', '#FBBF24'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }}}});
+            powerChart = new Chart(powerCtx, { type: 'doughnut', data: { labels: ['Position', 'Expert', 'Relationship'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#6366F1', '#34D399', '#FBBF24'], hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'top' }}}});
             const stakeholderCtx = document.getElementById('stakeholderChart').getContext('2d');
-            stakeholderChart = new Chart(stakeholderCtx, { type: 'bubble', data: { datasets: [{ label: 'Stakeholders', data: [], backgroundColor: 'rgba(52, 211, 153, 0.5)', borderColor: 'rgb(20, 83, 45)', borderWidth: 1, }] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Influence (1-10)' }, min: 0, max: 10, }, y: { title: { display: true, text: 'Interest (1-10)' }, min: 0, max: 10 }}, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.raw.label || '' }}, title: { display: true, text: 'Stakeholder Influence vs. Interest' }}}});
+            stakeholderChart = new Chart(stakeholderCtx, { type: 'bubble', data: { datasets: [{ label: 'Stakeholders', data: [], backgroundColor: 'rgba(52, 211, 153, 0.5)', borderColor: 'rgb(20, 83, 45)', borderWidth: 1, }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, scales: { x: { title: { display: true, text: 'Influence (1-10)' }, min: -0.5, max: 10.5, }, y: { title: { display: true, text: 'Interest (1-10)' }, min: -0.5, max: 10.5 }}, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.raw.label || '' }}, title: { display: true, text: 'Stakeholder Influence vs. Interest' }}}});
             
+            loadData();
             renderAll();
-            addAgendaRow();
+            
+            document.querySelectorAll('.savable').forEach(input => {
+                input.addEventListener('input', saveData);
+            });
             document.querySelectorAll('#summary-controls input').forEach(c => c.addEventListener('change', generateSummary));
         };
     </script>
