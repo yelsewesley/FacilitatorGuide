@@ -309,6 +309,7 @@
                             <label class="flex items-center"><input type="checkbox" data-section="stakeholders" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Stakeholder Analysis</label>
                             <label class="flex items-center"><input type="checkbox" data-section="plan" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Session Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="risks" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Risk & Contingency Plan</label>
+                            <label class="flex items-center"><input type="checkbox" data-section="facilitator-prep" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Facilitator's Inner Prep</label>
                             <label class="flex items-center"><input type="checkbox" data-section="reflection" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Reflection</label>
                         </div>
                         <button onclick="printSummary()" class="mt-6 w-full bg-emerald-500 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-600 transition-colors">Print / Export to PDF</button>
@@ -362,7 +363,7 @@
         let agenda = [];
         let saveTimeout;
 
-        const STORAGE_KEY = 'facilitatorGuideData_v5';
+        const STORAGE_KEY = 'facilitatorGuideData_v6';
 
         const statesAndTerritories = [
             "Alabama", "Alaska", "American Samoa", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Guam", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Northern Mariana Islands", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "U.S. Virgin Islands", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
@@ -544,9 +545,13 @@
                 const div = document.createElement('div');
                 div.className = 'p-3 bg-slate-50 rounded-lg border border-slate-200';
                 const strategyValue = player.strategy || '';
+                const roleValue = player.role || '';
                 div.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2 items-center">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 mb-2">
                         <input type="text" value="${player.name}" oninput="updateParticipant(${index}, 'name', this.value)" placeholder="Participant Name" class="form-input p-2 border border-slate-300 rounded-md">
+                        <input type="text" value="${roleValue}" oninput="updateParticipant(${index}, 'role', this.value)" placeholder="Role" class="form-input p-2 border border-slate-300 rounded-md">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 items-center">
                         <select onchange="updateParticipant(${index}, 'powerType', this.value)" class="form-select p-2 border border-slate-300 rounded-md w-full">
                             <option value="" ${player.powerType === '' ? 'selected' : ''}>Select Power Type</option>
                             <option value="Position" ${player.powerType === 'Position' ? 'selected' : ''}>Position</option>
@@ -648,7 +653,7 @@
 
         function addParticipant() {
             if (participants.length < 20) {
-                participants.push({ name: '', powerType: '', interest: '', influence: '', strategy: '' });
+                participants.push({ name: '', role: '', powerType: '', interest: '', influence: '', strategy: '' });
                 renderAll();
                 saveData();
             }
@@ -662,7 +667,7 @@
 
         function updateParticipant(index, key, value) {
             participants[index][key] = value;
-            if (key === 'name') {
+            if (key === 'name' || key === 'role') {
                 renderStakeholderAnalysis();
                 renderStakeholderLegend();
                 updateStakeholderChart();
@@ -737,16 +742,32 @@
             });
             generateSummary();
         }
+
+        const getRadioVal = (name) => {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            return checked ? checked.value : 'Not set';
+        };
         
+        function getTrafficLightColor(name) {
+            const value = getRadioVal(name);
+            if (name === 'state-engagement') {
+                if (value === 'Low') return 'bg-red-500';
+                if (value === 'Medium') return 'bg-yellow-400';
+                if (value === 'High') return 'bg-green-500';
+            } else if (name === 'ta-effort') {
+                if (value === 'Low') return 'bg-green-500';
+                if (value === 'Medium') return 'bg-yellow-400';
+                if (value === 'High') return 'bg-red-500';
+            }
+            return 'bg-slate-200';
+        }
+
         function generateSummary() {
             const controls = document.querySelectorAll('#summary-controls input[type="checkbox"]');
             const preview = document.getElementById('summary-preview');
             let html = '<div class="space-y-8">';
             const getVal = (id) => document.getElementById(id).value;
-            const getRadioVal = (name) => {
-                const checked = document.querySelector(`input[name="${name}"]:checked`);
-                return checked ? checked.value : 'Not set';
-            };
+            
             const getRadioDefinition = (name) => {
                 const checked = document.querySelector(`input[name="${name}"]:checked`);
                 if (!checked) return '';
@@ -764,8 +785,8 @@
                             html += `<p><strong>Team:</strong> ${escapeHtml(getVal('facilitation-team'))}</p>`;
                             html += `<p><strong>State:</strong> ${escapeHtml(getVal('working-state'))}</p>`;
                             html += `<div class="grid grid-cols-2 gap-4 mt-4">`;
-                            html += `<div><p><strong>State Engagement:</strong> ${escapeHtml(getRadioVal('state-engagement'))}</p></div>`;
-                            html += `<div><p><strong>TA Effort:</strong> ${escapeHtml(getRadioVal('ta-effort'))}</p></div>`;
+                            html += `<div><p><strong>State Engagement:</strong> <span class="inline-block w-4 h-4 rounded-full mr-2 ${getTrafficLightColor('state-engagement')}"></span>${escapeHtml(getRadioVal('state-engagement'))}</p></div>`;
+                            html += `<div><p><strong>TA Effort:</strong> <span class="inline-block w-4 h-4 rounded-full mr-2 ${getTrafficLightColor('ta-effort')}"></span>${escapeHtml(getRadioVal('ta-effort'))}</p></div>`;
                             html += `</div>`;
                             html += `<h3 class="text-lg font-semibold mt-4">High-Level Goals</h3><p>${escapeHtml(getVal('high-level-goals'))}</p>`;
                             html += `<h3 class="text-lg font-semibold mt-4">High-Level Barriers</h3><p>${escapeHtml(getVal('high-level-barriers'))}</p>`;
@@ -773,7 +794,7 @@
                         case 'power':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Power & Influence</h2>';
                             participants.filter(p => p.name).forEach(p => {
-                                html += `<div class="mb-2"><p><strong>${escapeHtml(p.name)}:</strong> ${escapeHtml(p.powerType)}</p>`;
+                                html += `<div class="mb-2"><p><strong>${escapeHtml(p.name)} (${escapeHtml(p.role)}):</strong> ${escapeHtml(p.powerType)}</p>`;
                                 if(p.strategy) html += `<p class="text-sm pl-4"><em>Strategy:</em> ${escapeHtml(p.strategy)}</p></div>`;
                             });
                             if (powerChart) html += `<img src="${powerChart.toBase64Image()}" class="mt-4 mx-auto" style="max-width: 400px;"/>`;
@@ -801,14 +822,16 @@
                                 html += `<tr><td class="p-2 border-t">${escapeHtml(item.time)}</td><td class="p-2 border-t">${escapeHtml(item.activity)}</td><td class="p-2 border-t">${escapeHtml(item.purpose)}</td></tr>`;
                             });
                             html += '</tbody></table>';
-                            html += `<h3 class="text-lg font-semibold mt-4">Facilitator Stance</h3>`;
-                            html += `<p><strong>Role:</strong> ${escapeHtml(getVal('facilitator-role'))}</p><p><strong>Mantra:</strong> ${escapeHtml(getVal('facilitator-mantra'))}</p>`;
                             break;
                         case 'risks':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Risk & Contingency Plan</h2>';
                             risks.filter(r => r.description).forEach(r => {
                                 html += `<div class="mb-2"><p><strong>Risk:</strong> ${escapeHtml(r.description)}</p><p class="text-sm pl-4"><em>Plan:</em> ${escapeHtml(r.intervention)}</p></div>`;
                             });
+                            break;
+                        case 'facilitator-prep':
+                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Facilitator\'s Inner Prep</h2>';
+                            html += `<p><strong>Role:</strong> ${escapeHtml(getVal('facilitator-role'))}</p><p><strong>Mantra:</strong> ${escapeHtml(getVal('facilitator-mantra'))}</p>`;
                             break;
                         case 'reflection':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Post-Session Reflection</h2>';
