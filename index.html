@@ -74,11 +74,24 @@
             color: white;
             font-weight: 600;
         }
-        .traffic-light input[value="Low"]:checked + label { background-color: #34D399; border-color: #10B981; }
-        .traffic-light input[value="Medium"]:checked + label { background-color: #FBBF24; border-color: #F59E0B; }
-        .traffic-light input[value="High"]:checked + label { background-color: #EF4444; border-color: #DC2626; }
+        /* Default Traffic Light (TA Effort): Low = Green, High = Red */
+        #ta-effort-light input[value="Low"]:checked + label { background-color: #34D399; border-color: #10B981; }
+        #ta-effort-light input[value="Medium"]:checked + label { background-color: #FBBF24; border-color: #F59E0B; }
+        #ta-effort-light input[value="High"]:checked + label { background-color: #EF4444; border-color: #DC2626; }
+        
+        /* State Engagement Traffic Light: Low = Red, High = Green */
+        #state-engagement-light input[value="Low"]:checked + label { background-color: #EF4444; border-color: #DC2626; }
+        #state-engagement-light input[value="Medium"]:checked + label { background-color: #FBBF24; border-color: #F59E0B; }
+        #state-engagement-light input[value="High"]:checked + label { background-color: #34D399; border-color: #10B981; }
+
         .traffic-light input[type="radio"] {
             display: none;
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
         }
         @media print {
             body * {
@@ -111,6 +124,7 @@
             <div class="mt-4 h-8 flex items-center justify-center space-x-4">
                 <span id="save-indicator" class="text-emerald-600 font-semibold opacity-0">Saved.</span>
                 <div class="ml-auto flex items-center space-x-4">
+                    <button onclick="toggleInstructionsModal(true)" class="text-sm text-sky-600 hover:text-sky-800 font-semibold">How to Collaborate</button>
                     <button onclick="document.getElementById('import-file').click()" class="text-sm text-sky-600 hover:text-sky-800 font-semibold">Import Plan</button>
                     <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
                     <button onclick="exportData()" class="text-sm text-sky-600 hover:text-sky-800 font-semibold">Export Plan</button>
@@ -134,7 +148,7 @@
             <div id="foundation" class="tab-content active">
                 <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
                     <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 1: The Core Foundation</h2>
-                    <p class="text-slate-500 mb-6">Define the high-level strategic context for this engagement.</p>
+                    <p class="text-slate-500 mb-6">Define the high-level strategic context for this engagement. This tool is intended for planning critical or high-stakes sessions, not general TA meetings.</p>
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><label for="facilitation-team" class="block text-sm font-medium text-slate-700 mb-1">Facilitation Team</label><input type="text" id="facilitation-team" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
@@ -143,7 +157,6 @@
                                 <select id="working-state" class="form-select w-full p-2 border border-slate-300 rounded-md savable"></select>
                             </div>
                         </div>
-                        <div><label for="date-time" class="block text-sm font-medium text-slate-700 mb-1">Date</label><input type="date" id="date-time" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-2">State Engagement</label>
@@ -208,13 +221,10 @@
 
             <div id="plan" class="tab-content">
                  <div class="bg-white p-6 sm:p-8 rounded-lg shadow-sm max-w-5xl mx-auto">
-                    <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 3: The Process Flow & Plan</h2>
-                    <p class="text-slate-500 mb-6">Design the journey of your session, map the agenda, and prepare contingency plans.</p>
+                    <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 3: The Session Plan</h2>
+                    <p class="text-slate-500 mb-6">Design the journey for a specific, high-stakes session. This plan should align with the high-level goals defined in the Foundation.</p>
                     <div class="space-y-8">
-                        <div>
-                            <label for="purpose" class="block text-sm font-medium text-slate-700 mb-1">Session Purpose</label>
-                            <textarea id="purpose" rows="2" class="form-textarea w-full p-2 border border-slate-300 rounded-md savable" placeholder="What is the single most important purpose of this specific session?"></textarea>
-                        </div>
+                        <div><label for="session-date" class="block text-sm font-medium text-slate-700 mb-1">Session Date</label><input type="date" id="session-date" class="form-input w-full p-2 border border-slate-300 rounded-md savable"></div>
                         <div>
                             <h3 class="text-lg font-semibold text-slate-800">Session Objectives</h3>
                             <div class="mt-2 space-y-2">
@@ -283,13 +293,21 @@
                 <div class="grid lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-2xl font-bold text-emerald-700 mb-1">Part 6: Summary & Export</h2>
-                        <p class="text-slate-500 mb-6">Select the sections to include in your report, then print or save as a PDF.</p>
+                        <p class="text-slate-500 mb-4">Select a preset or choose custom sections to include in your report, then print or save as a PDF.</p>
+                        <div class="mb-4">
+                            <label for="summary-preset" class="block text-sm font-medium text-slate-700 mb-1">Report Presets</label>
+                            <select id="summary-preset" onchange="applySummaryPreset(this.value)" class="form-select w-full p-2 border border-slate-300 rounded-md">
+                                <option value="custom">Custom Selection</option>
+                                <option value="all-state">All-State Review</option>
+                                <option value="agenda">Shareable Agenda</option>
+                            </select>
+                        </div>
                         <div id="summary-controls" class="space-y-3">
                             <label class="flex items-center"><input type="checkbox" data-section="foundation" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Foundation</label>
                             <label class="flex items-center"><input type="checkbox" data-section="power" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Power & Influence</label>
                             <label class="flex items-center"><input type="checkbox" data-section="tension" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Tension Temperature</label>
                             <label class="flex items-center"><input type="checkbox" data-section="stakeholders" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Stakeholder Analysis</label>
-                            <label class="flex items-center"><input type="checkbox" data-section="plan" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Process & Plan</label>
+                            <label class="flex items-center"><input type="checkbox" data-section="plan" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Session Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="risks" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Risk & Contingency Plan</label>
                             <label class="flex items-center"><input type="checkbox" data-section="reflection" checked class="h-4 w-4 rounded text-emerald-500 mr-2"> Reflection</label>
                         </div>
@@ -300,6 +318,42 @@
             </div>
         </div>
     </div>
+    
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden opacity-0" onclick="toggleInstructionsModal(false)">
+        <div class="modal-content bg-white rounded-lg shadow-xl p-6 sm:p-8 w-full max-w-2xl transform scale-95" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-2xl font-bold text-emerald-700">Collaborating on a Plan</h2>
+                <button onclick="toggleInstructionsModal(false)" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div class="space-y-4 text-slate-700">
+                <p>This tool allows your TA team to collaborate on a single facilitation plan by passing a small data file back and forth. Here’s the recommended workflow:</p>
+                <div class="space-y-3">
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Step 1: Start & Save</h3>
+                        <p class="text-sm">One person starts the plan. As they fill out the form, their work is automatically saved to their local browser. This becomes the "master copy".</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Step 2: Export Plan Data</h3>
+                        <p class="text-sm">When ready to share, click the <strong>Export Plan</strong> button. This will save a small JSON file based on the state and session date you entered (e.g., `Arizona-2025-08-15-FacilitatorPlan.json`) to your computer.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Step 3: Share the File</h3>
+                        <p class="text-sm">Send this small <code>.json</code> file to your TA partner or team via email, Teams, or any other method.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-800">Step 4: Import & Continue</h3>
+                        <p class="text-sm">Your partner opens their blank version of this tool, clicks <strong>Import Plan</strong>, and selects the file you sent. The entire worksheet will instantly populate with the in-progress plan.</p>
+                    </div>
+                </div>
+                <p class="pt-4 border-t text-sm text-slate-600"><strong>Key Point:</strong> This process allows the "master copy" of the plan to be passed between team members. After the session, anyone with the latest file can import it, fill out the <strong>Reflection</strong> tab, and export the final PDF summary.</p>
+            </div>
+            <div class="mt-6 text-right">
+                <button onclick="toggleInstructionsModal(false)" class="bg-emerald-500 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-600 transition-colors">Got it</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         let stakeholderChart, powerChart;
@@ -308,7 +362,7 @@
         let agenda = [];
         let saveTimeout;
 
-        const STORAGE_KEY = 'facilitatorGuideData_v4';
+        const STORAGE_KEY = 'facilitatorGuideData_v5';
 
         const statesAndTerritories = [
             "Alabama", "Alaska", "American Samoa", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia", "Guam", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Northern Mariana Islands", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "U.S. Virgin Islands", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
@@ -333,6 +387,24 @@
                 if (b.getAttribute('onclick') === `showTab('${tabId}')`) b.classList.add('active');
             });
             if (tabId === 'summary') generateSummary();
+        }
+
+        function toggleInstructionsModal(show) {
+            const modal = document.getElementById('instructions-modal');
+            const content = modal.querySelector('.modal-content');
+            if (show) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
         }
 
         function showSaveIndicator() {
@@ -419,7 +491,7 @@
             const blob = new Blob([dataStr], {type: "application/json"});
             
             const state = document.getElementById('working-state').value.replace(/\s+/g, '-') || 'Untitled';
-            const date = document.getElementById('date-time').value || new Date().toISOString().split('T')[0];
+            const date = document.getElementById('session-date').value || new Date().toISOString().split('T')[0];
             const filename = `${state}-${date}-FacilitatorPlan.json`;
 
             const url = URL.createObjectURL(blob);
@@ -648,6 +720,23 @@
             }));
             stakeholderChart.update('none');
         }
+
+        function applySummaryPreset(preset) {
+            const controls = document.querySelectorAll('#summary-controls input[type="checkbox"]');
+            const presets = {
+                'custom': null, // Do nothing for custom
+                'all-state': ['foundation', 'power', 'tension', 'stakeholders', 'risks'],
+                'agenda': ['foundation', 'power', 'plan']
+            };
+
+            const sectionsToShow = presets[preset];
+            if (!sectionsToShow) return;
+
+            controls.forEach(cb => {
+                cb.checked = sectionsToShow.includes(cb.dataset.section);
+            });
+            generateSummary();
+        }
         
         function generateSummary() {
             const controls = document.querySelectorAll('#summary-controls input[type="checkbox"]');
@@ -657,6 +746,11 @@
             const getRadioVal = (name) => {
                 const checked = document.querySelector(`input[name="${name}"]:checked`);
                 return checked ? checked.value : 'Not set';
+            };
+            const getRadioDefinition = (name) => {
+                const checked = document.querySelector(`input[name="${name}"]:checked`);
+                if (!checked) return '';
+                return checked.parentElement.querySelector('.definition-text').textContent;
             };
             const escapeHtml = (unsafe) => unsafe ? unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;") : '';
 
@@ -669,7 +763,6 @@
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Foundation</h2>';
                             html += `<p><strong>Team:</strong> ${escapeHtml(getVal('facilitation-team'))}</p>`;
                             html += `<p><strong>State:</strong> ${escapeHtml(getVal('working-state'))}</p>`;
-                            html += `<p><strong>Date:</strong> ${escapeHtml(getVal('date-time'))}</p>`;
                             html += `<div class="grid grid-cols-2 gap-4 mt-4">`;
                             html += `<div><p><strong>State Engagement:</strong> ${escapeHtml(getRadioVal('state-engagement'))}</p></div>`;
                             html += `<div><p><strong>TA Effort:</strong> ${escapeHtml(getRadioVal('ta-effort'))}</p></div>`;
@@ -686,7 +779,9 @@
                             if (powerChart) html += `<img src="${powerChart.toBase64Image()}" class="mt-4 mx-auto" style="max-width: 400px;"/>`;
                             break;
                         case 'tension':
-                            html += `<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2><p>${escapeHtml(getRadioVal('tension'))}</p>`;
+                             const tensionValue = getRadioVal('tension');
+                             const tensionDef = getRadioDefinition('tension');
+                            html += `<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Tension Temperature</h2><p><strong>${escapeHtml(tensionValue)}:</strong> ${escapeHtml(tensionDef)}</p>`;
                             break;
                         case 'stakeholders':
                             html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Stakeholder Analysis</h2>';
@@ -695,8 +790,8 @@
                             html += '<div><h4>Legend</h4>' + document.getElementById('stakeholder-legend').innerHTML + '</div></div>';
                             break;
                         case 'plan':
-                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Process & Plan</h2>';
-                            html += `<h3 class="text-lg font-semibold mt-4">Session Purpose</h3><p>${escapeHtml(getVal('purpose'))}</p>`;
+                            html += '<h2 class="text-2xl font-bold text-slate-700 border-b pb-2 mb-4">Session Plan</h2>';
+                            html += `<p><strong>Session Date:</strong> ${escapeHtml(getVal('session-date'))}</p>`;
                             html += `<h3 class="text-lg font-semibold mt-4">Session Objectives</h3>`;
                             html += `<p><strong>Tangible:</strong> ${escapeHtml(getVal('tangible-outcome'))}</p>`;
                             html += `<p><strong>Experiential:</strong> ${escapeHtml(getVal('experiential-outcome'))}</p>`;
@@ -748,7 +843,13 @@
                     input.addEventListener('change', saveData);
                 }
             });
-            document.querySelectorAll('#summary-controls input').forEach(c => c.addEventListener('change', generateSummary));
+
+            document.querySelectorAll('#summary-controls input').forEach(c => {
+                c.addEventListener('change', () => {
+                    document.getElementById('summary-preset').value = 'custom';
+                    generateSummary();
+                });
+            });
         };
     </script>
 
